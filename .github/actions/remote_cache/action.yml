@@ -2,9 +2,7 @@ name: 'Remote caching'
 description: 'Use Google Cloud Storage as a backend for remote caching'
 inputs:
   credentials_json:
-    description: "Optional Google Cloud credentials; caching is skipped when absent"
-    required: false
-    default: ''
+    required: true
     type: string
   enable:
     description: "Enable auth (and caching)"
@@ -18,16 +16,16 @@ runs:
   using: "composite"
   steps:
     - uses: 'google-github-actions/auth@v3'
-      if: inputs.enable == 'true' && inputs.credentials_json != ''
+      if: inputs.enable == 'true'
       with:
         credentials_json: ${{inputs.credentials_json}}
     - name: Install sccache-cache
       uses: mozilla-actions/sccache-action@v0.0.11
-      if: inputs.enable == 'true' && inputs.credentials_json != '' && inputs.set_cmake_sccache_launcher == 'true'
+      if: inputs.enable == 'true' && inputs.set_cmake_sccache_launcher == 'true'
       env:
         SCCACHE_GCS_KEY_PATH: ${{env.GOOGLE_GHA_CREDS_PATH}}
     - name: Set caching env vars for CMake
-      if: inputs.enable == 'true' && inputs.credentials_json != '' && inputs.set_cmake_sccache_launcher == 'true'
+      if: inputs.enable == 'true' && inputs.set_cmake_sccache_launcher == 'true'
       shell: bash
       run: |
         echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
@@ -35,7 +33,7 @@ runs:
         echo "SCCACHE_GCS_KEY_PREFIX=cmake" >> $GITHUB_ENV
         echo "SCCACHE_GCS_RW_MODE=READ_WRITE" >> $GITHUB_ENV
     - name: Install HOME .bazel_rc
-      if: inputs.enable == 'true' && inputs.credentials_json != '' && inputs.set_home_bazelrc == 'true'
+      if: inputs.enable == 'true' && inputs.set_home_bazelrc == 'true'
       shell: bash
       run: |
         echo "Installing remote cache in workspace 'user.bazelrc'"
